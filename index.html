@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 | 0909Group</title>
+<meta name="description" content="0909Group製作 - 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 公式サイト。スクリプト配布、機能紹介、FAQ。">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/900.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/dotgothic16@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css">
+<style>
+:root{
+  --p1:#4A00E0;
+  --p2:#8E2DE2;
+  --p3:#B06AB3;
+  --p4:#6a11cb;
+  --p5:#2575fc;
+  --bg:#06030f;
+  --bg2:#0d0620;
+  --card:rgba(255,255,255,.045);
+  --line:rgba(180,140,255,.16);
+  --txt:#e9e4ff;
+  --muted:#a296c9;
+  --gold:#ffd76a;
+  --grad:linear-gradient(120deg,#4A00E0 0%,#8E2DE2 45%,#B06AB3 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:'Noto Sans JP',system-ui,-apple-system,'Yu Gothic',sans-serif;
+  overflow-x:hidden;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(142,45,226,.55);color:#fff}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0518}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#4A00E0,#8E2DE2);border-radius:20px;border:2px solid #0a0518}
+
+/* ===== 背景エフェクト ===== */
+.bgfx{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(1200px 700px at 15% -10%,rgba(74,0,224,.35),transparent 60%),
+  radial-gradient(1000px 600px at 90% 10%,rgba(142,45,226,.28),transparent 60%),
+  radial-gradient(900px 800px at 50% 110%,rgba(37,117,252,.18),transparent 60%),
+  linear-gradient(180deg,#06030f,#0b0520 40%,#06030f);}
+.bgfx .grid{position:absolute;inset:-50%;
+  background-image:linear-gradient(rgba(160,120,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(160,120,255,.07) 1px,transparent 1px);
+  background-size:64px 64px;transform:perspective(600px) rotateX(60deg) translateY(-8%);
+  mask-image:radial-gradient(ellipse at 50% 30%,#000 20%,transparent 70%);
+  animation:gridMove 22s linear infinite;}
+@keyframes gridMove{to{background-position:0 640px,640px 0}}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:float 16s ease-in-out infinite}
+.orb.a{width:420px;height:420px;background:#5b12d6;top:-120px;left:-80px}
+.orb.b{width:380px;height:380px;background:#8E2DE2;top:35%;right:-120px;animation-delay:-5s}
+.orb.c{width:300px;height:300px;background:#2575fc;bottom:-80px;left:35%;animation-delay:-9s;opacity:.35}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-35px) scale(1.08)}66%{transform:translate(-30px,25px) scale(.95)}}
+.cursor-glow{position:fixed;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,rgba(142,45,226,.13),transparent 65%);
+  transform:translate(-50%,-50%);transition:opacity .4s;opacity:0}
+
+/* ===== ナビ ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(18px);
+  background:rgba(8,4,20,.62);border-bottom:1px solid var(--line);transition:.35s}
+.nav.small{background:rgba(8,4,20,.9);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.nav-in{max-width:1200px;margin:0 auto;padding:15px 24px;display:flex;align-items:center;gap:26px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:.02em;text-decoration:none;color:#fff;font-size:16px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;
+  font-family:'DotGothic16',monospace;font-size:14px;box-shadow:0 0 20px rgba(142,45,226,.7);animation:pulseMark 3s ease-in-out infinite}
+@keyframes pulseMark{0%,100%{box-shadow:0 0 16px rgba(142,45,226,.55)}50%{box-shadow:0 0 30px rgba(142,45,226,.95)}}
+.logo small{display:block;font-size:10px;font-weight:400;color:var(--muted);letter-spacing:.18em;line-height:1.2}
+.nav-links{margin-left:auto;display:flex;gap:6px;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13.5px;padding:8px 14px;border-radius:9px;transition:.25s;font-weight:700}
+.nav-links a:hover{color:#fff;background:rgba(142,45,226,.18)}
+.btn{display:inline-flex;align-items:center;gap:9px;border:none;cursor:pointer;font-family:inherit;font-weight:900;
+  color:#fff;background:var(--grad);padding:13px 26px;border-radius:12px;font-size:14.5px;text-decoration:none;
+  box-shadow:0 8px 26px rgba(142,45,226,.42);transition:.25s;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);transition:.6s}
+.btn:hover::after{left:130%}
+.btn:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(142,45,226,.6)}
+.btn:active{transform:translateY(-1px)}
+.btn.ghost{background:rgba(255,255,255,.05);border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{background:rgba(142,45,226,.18);border-color:rgba(142,45,226,.6)}
+.btn.sm{padding:10px 18px;font-size:13px}
+.burger{display:none;margin-left:auto;background:none;border:1px solid var(--line);color:#fff;border-radius:9px;padding:7px 11px;cursor:pointer;font-size:16px}
+
+/* ===== ヒーロー ===== */
+.hero{max-width:1200px;margin:0 auto;padding:160px 24px 70px;display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:99px;font-size:12px;font-weight:700;
+  background:rgba(142,45,226,.14);border:1px solid rgba(142,45,226,.45);color:#d7c4ff;letter-spacing:.06em;margin-bottom:22px}
+.dot{width:8px;height:8px;border-radius:50%;background:#41ff9c;box-shadow:0 0 12px #41ff9c;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+h1{font-size:clamp(30px,4.4vw,54px);line-height:1.28;font-weight:900;letter-spacing:-.01em}
+h1 .cn{font-family:'DotGothic16',monospace;display:block;background:linear-gradient(92deg,#c9a6ff,#8E2DE2 40%,#5ad1ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(142,45,226,.45))}
+.h1sub{margin-top:14px;font-size:clamp(15px,1.7vw,20px);font-weight:700;color:#efe8ff}
+.h1sub b{color:var(--gold)}
+.hero p.lead{margin-top:18px;color:var(--muted);font-size:15px;max-width:520px}
+.typed-wrap{margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:13.5px;color:#9be8c0;
+  background:rgba(0,0,0,.42);border:1px solid var(--line);border-left:3px solid var(--p2);
+  padding:11px 16px;border-radius:9px;min-height:44px;display:flex;align-items:center}
+.caret{display:inline-block;width:8px;height:16px;background:#9be8c0;margin-left:2px;animation:caret .8s steps(1) infinite;vertical-align:middle}
+@keyframes caret{50%{opacity:0}}
+.hero-cta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 14px;text-align:center;transition:.3s}
+.stat:hover{transform:translateY(-4px);border-color:rgba(142,45,226,.55);background:rgba(142,45,226,.1)}
+.stat .n{font-family:'JetBrains Mono',monospace;font-size:23px;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .l{font-size:10.5px;color:var(--muted);letter-spacing:.1em;margin-top:3px}
+
+/* ヒーロー右: キーボードビジュアル */
+.visual{position:relative;display:grid;place-items:center}
+.kb-card{width:100%;max-width:480px;background:linear-gradient(150deg,rgba(30,12,66,.85),rgba(10,5,26,.9));
+  border:1px solid rgba(160,120,255,.28);border-radius:22px;padding:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.09);
+  animation:tilt 9s ease-in-out infinite;position:relative;z-index:2}
+@keyframes tilt{0%,100%{transform:rotate(-1.6deg) translateY(0)}50%{transform:rotate(1.6deg) translateY(-12px)}}
+.kb-top{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#b7a6e6;margin-bottom:14px}
+.wpm{font-size:26px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;text-shadow:0 0 18px rgba(142,45,226,.9)}
+.wpm span{font-size:11px;color:var(--muted);display:block;letter-spacing:.2em}
+.kb-row{display:flex;gap:6px;justify-content:center;margin-bottom:6px}
+.key{flex:1;min-width:0;height:34px;border-radius:7px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);
+  display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9d8fc7;transition:.09s}
+.key.hit{background:linear-gradient(180deg,#8E2DE2,#4A00E0);color:#fff;border-color:rgba(255,255,255,.4);
+  transform:translateY(3px) scale(.94);box-shadow:0 0 20px rgba(142,45,226,.9)}
+.key.next{border-color:rgba(255,215,106,.75);color:var(--gold);box-shadow:0 0 14px rgba(255,215,106,.35)}
+.kb-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:16px}
+.kb-bar i{display:block;height:100%;width:0%;background:var(--grad);box-shadow:0 0 14px rgba(142,45,226,.9);transition:width .12s linear}
+.float-chip{position:absolute;background:rgba(12,6,30,.9);border:1px solid rgba(160,120,255,.35);border-radius:12px;
+  padding:9px 14px;font-size:11.5px;font-weight:700;box-shadow:0 12px 34px rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:3}
+.chip1{top:-14px;left:-10px;color:#7dffb0;animation:bob 5s ease-in-out infinite}
+.chip2{bottom:26px;right:-14px;color:var(--gold);animation:bob 6.5s ease-in-out infinite reverse}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+
+/* ===== マーキー ===== */
+.marquee{overflow:hidden;border-block:1px solid var(--line);background:rgba(142,45,226,.07);padding:13px 0;margin-top:20px;
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.mq-track{display:flex;gap:44px;width:max-content;animation:mq 26s linear infinite;font-family:'DotGothic16',monospace;font-size:14px;color:#cbb8ff;white-space:nowrap}
+.mq-track span{display:flex;align-items:center;gap:44px}
+.mq-track i{color:var(--p2);font-style:normal}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ===== 共通セクション ===== */
+section{max-width:1200px;margin:0 auto;padding:92px 24px;position:relative}
+.sec-head{text-align:center;max-width:720px;margin:0 auto 54px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.3em;color:var(--p3);text-transform:uppercase}
+.sec-head h2{font-size:clamp(24px,3.3vw,38px);font-weight:900;margin:12px 0 14px;line-height:1.35}
+.sec-head h2 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-head p{color:var(--muted);font-size:14.5px}
+.reveal{opacity:0;transform:translateY(34px);transition:.85s cubic-bezier(.2,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal[data-d="1"]{transition-delay:.1s}.reveal[data-d="2"]{transition-delay:.2s}
+.reveal[data-d="3"]{transition-delay:.3s}.reveal[data-d="4"]{transition-delay:.4s}
+.reveal[data-d="5"]{transition-delay:.5s}.reveal[data-d="6"]{transition-delay:.6s}
+
+/* ===== 機能カード ===== */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;position:relative;overflow:hidden;transition:.35s}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(400px 200px at var(--mx,50%) var(--my,0%),rgba(142,45,226,.22),transparent 70%);opacity:0;transition:.35s}
+.card:hover{transform:translateY(-7px);border-color:rgba(142,45,226,.55);box-shadow:0 22px 50px rgba(0,0,0,.55)}
+.card:hover::before{opacity:1}
+.card .ico{width:48px;height:48px;border-radius:13px;background:linear-gradient(135deg,rgba(74,0,224,.5),rgba(142,45,226,.5));
+  border:1px solid rgba(180,140,255,.35);display:grid;place-items:center;font-size:22px;margin-bottom:16px;position:relative}
+.card h3{font-size:17px;font-weight:900;margin-bottom:9px;position:relative}
+.card p{font-size:13.4px;color:var(--muted);position:relative}
+.tag{display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:4px 10px;border-radius:99px;
+  background:rgba(142,45,226,.16);border:1px solid rgba(142,45,226,.4);color:#cbb2ff;position:relative}
+
+/* ===== GUIプレビュー ===== */
+.preview{display:grid;grid-template-columns:1fr 380px;gap:52px;align-items:center}
+.pv-list{display:flex;flex-direction:column;gap:14px;margin-top:26px}
+.pv-item{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 18px;transition:.3s}
+.pv-item:hover{border-color:rgba(142,45,226,.5);transform:translateX(6px)}
+.pv-item .num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#fff;background:var(--grad);
+  width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.pv-item b{font-size:14.5px;display:block}
+.pv-item small{color:var(--muted);font-size:12.5px}
+
+/* GUIモック */
+.gui-mock{background:linear-gradient(135deg,rgba(74,0,224,.9),rgba(142,45,226,.9));backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,.25);border-radius:18px;color:#fff;overflow:hidden;
+  box-shadow:0 26px 70px rgba(0,0,0,.75);animation:tilt2 8s ease-in-out infinite;font-size:13px}
+@keyframes tilt2{0%,100%{transform:rotate(1.4deg) translateY(0)}50%{transform:rotate(-1.4deg) translateY(-10px)}}
+.gm-head{padding:12px 15px;background:rgba(0,0,0,.32);border-bottom:1px solid rgba(255,255,255,.12);
+  display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gm-head span{font-weight:700;font-size:11px;line-height:1.4;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.gm-head div{display:flex;gap:8px}
+.gm-head button{background:none;border:none;color:#fff;font-size:15px;cursor:pointer;line-height:1;opacity:.85}
+.gm-head button:hover{opacity:1}
+.gm-body{padding:15px;display:flex;flex-direction:column;gap:11px;background:rgba(20,6,50,.28)}
+.gm-status{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.22);padding:8px 11px;border-radius:9px;font-size:12.5px}
+#gm-state{color:#ff5c5c;font-weight:900;text-shadow:0 0 8px #ff4444}
+#gm-state.on{color:#4cff8f;text-shadow:0 0 8px #4caf50}
+.gm-btn{background:linear-gradient(90deg,#8E2DE2,#4A00E0);border:none;padding:11px;border-radius:9px;color:#fff;
+  font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 15px rgba(142,45,226,.4);transition:.2s;font-family:inherit}
+.gm-btn:hover{filter:brightness(1.18)}
+.gm-btn.on{background:linear-gradient(90deg,#4A00E0,#8E2DE2)}
+.gm-slider{background:rgba(0,0,0,.16);padding:10px 12px;border-radius:9px}
+.gm-slider label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:7px}
+.gm-slider input{width:100%;accent-color:#8E2DE2;cursor:pointer}
+.gm-checks{display:flex;flex-direction:column;gap:8px;border-top:1px solid rgba(255,255,255,.14);padding-top:11px}
+.gm-checks label{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px}
+.gm-checks input{width:16px;height:16px;accent-color:#8E2DE2;cursor:pointer}
+.gm-hyper{background:linear-gradient(90deg,#6a11cb,#2575fc);box-shadow:0 4px 15px rgba(37,117,252,.5)}
+.gm-log{height:82px;overflow-y:auto;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;padding:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#cfc6ea;line-height:1.55}
+.gm-log div{margin-bottom:2px}
+.gm-log .ok{color:#7dffb0}.gm-log .er{color:#ff8f8f}
+
+/* ===== 使い方 ===== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+.step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 26px;position:relative;transition:.35s}
+.step:hover{transform:translateY(-6px);border-color:rgba(142,45,226,.5)}
+.step .big{font-family:'JetBrains Mono',monospace;font-size:44px;font-weight:700;line-height:1;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.9}
+.step h3{margin:14px 0 10px;font-size:16.5px}
+.step p{font-size:13.4px;color:var(--muted)}
+.step code{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:rgba(142,45,226,.18);
+  border:1px solid rgba(142,45,226,.35);padding:2px 7px;border-radius:6px;color:#dcc9ff}
+.warn{margin-top:28px;background:rgba(255,215,106,.07);border:1px solid rgba(255,215,106,.3);border-radius:16px;padding:20px 24px;
+  display:flex;gap:15px;align-items:flex-start;font-size:13.4px;color:#f3e3bb}
+.warn b{color:var(--gold)}
+
+/* ===== コードボックス ===== */
+.code-wrap{border:1px solid rgba(160,120,255,.28);border-radius:18px;overflow:hidden;background:#08040f;
+  box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.code-bar{display:flex;align-items:center;gap:12px;padding:13px 18px;background:linear-gradient(90deg,rgba(74,0,224,.42),rgba(142,45,226,.28));border-bottom:1px solid rgba(160,120,255,.25)}
+.tl{display:flex;gap:7px}
+.tl i{width:11px;height:11px;border-radius:50%;display:block}
+.tl i:nth-child(1){background:#ff5f57}.tl i:nth-child(2){background:#febc2e}.tl i:nth-child(3){background:#28c840}
+.fname{font-family:'JetBrains Mono',monospace;font-size:12px;color:#d9ccff}
+.copy-area{margin-left:auto;display:flex;align-items:center;gap:10px}
+.lines{font-family:'JetBrains Mono',monospace;font-size:11px;color:#8b7cb8}
+#copyBtn{background:var(--grad);border:none;color:#fff;font-family:inherit;font-weight:900;font-size:12.5px;
+  padding:9px 18px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:.25s;box-shadow:0 6px 18px rgba(142,45,226,.4)}
+#copyBtn:hover{transform:translateY(-2px);filter:brightness(1.15)}
+#copyBtn.done{background:linear-gradient(90deg,#12b76a,#41ff9c);color:#04150c}
+pre#codeBox{max-height:520px;overflow:auto;padding:22px;font-family:'JetBrains Mono',monospace;font-size:12.2px;
+  line-height:1.72;color:#cfc4ee;white-space:pre;tab-size:2;background:
+  linear-gradient(180deg,rgba(142,45,226,.05),transparent 220px)}
+.tok-com{color:#6c6390;font-style:italic}
+.tok-str{color:#a8e6a1}
+.tok-tpl{color:#8fd3ff}
+.tok-kw{color:#d59bff;font-weight:700}
+.tok-num{color:#ffcb7a}
+
+/* ===== FAQ ===== */
+.faq{max-width:840px;margin:0 auto}
+.q{border:1px solid var(--line);border-radius:15px;margin-bottom:13px;overflow:hidden;background:var(--card);transition:.3s}
+.q.open{border-color:rgba(142,45,226,.6);background:rgba(142,45,226,.09);box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.q button{width:100%;background:none;border:none;color:#fff;font-family:inherit;font-size:15px;font-weight:700;
+  padding:19px 22px;text-align:left;cursor:pointer;display:flex;gap:15px;align-items:center}
+.q .mark{margin-left:auto;width:26px;height:26px;border-radius:8px;background:var(--grad);display:grid;place-items:center;
+  font-size:16px;flex-shrink:0;transition:.35s;box-shadow:0 4px 12px rgba(142,45,226,.45)}
+.q.open .mark{transform:rotate(45deg)}
+.a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.3,.8,.3,1)}
+.a-in{padding:0 22px 20px;color:var(--muted);font-size:13.8px}
+.a-in code{font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(142,45,226,.18);padding:2px 6px;border-radius:5px;color:#dcc9ff}
+
+/* ===== CTA / フッター ===== */
+.cta{text-align:center;background:linear-gradient(135deg,rgba(74,0,224,.3),rgba(142,45,226,.18));
+  border:1px solid rgba(160,120,255,.3);border-radius:26px;padding:60px 30px;position:relative;overflow:hidden}
+.cta::before{content:'';position:absolute;width:420px;height:420px;border-radius:50%;background:rgba(142,45,226,.28);
+  filter:blur(90px);top:-160px;left:50%;transform:translateX(-50%)}
+.cta h2{font-size:clamp(22px,3vw,34px);font-weight:900;position:relative}
+.cta p{color:#cfc0f0;margin:14px auto 28px;max-width:520px;font-size:14px;position:relative}
+footer{border-top:1px solid var(--line);background:rgba(5,2,12,.75);margin-top:40px}
+.f-in{max-width:1200px;margin:0 auto;padding:46px 24px 30px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:34px}
+footer h4{font-size:12px;letter-spacing:.16em;color:var(--p3);margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+footer a{display:block;color:var(--muted);text-decoration:none;font-size:13.3px;padding:5px 0;transition:.25s}
+footer a:hover{color:#fff;transform:translateX(4px)}
+.f-note{color:var(--muted);font-size:12.6px;max-width:340px}
+.f-bot{border-top:1px solid var(--line);padding:18px 24px;text-align:center;font-size:12px;color:#7d71a3;
+  font-family:'JetBrains Mono',monospace}
+.f-bot b{color:#b7a6e6}
+
+/* トースト */
+.toast{position:fixed;left:50%;bottom:38px;transform:translate(-50%,140%);z-index:999;
+  background:linear-gradient(120deg,#4A00E0,#8E2DE2);color:#fff;padding:15px 30px;border-radius:14px;font-weight:900;font-size:14px;
+  box-shadow:0 18px 50px rgba(74,0,224,.6);border:1px solid rgba(255,255,255,.3);transition:.5s cubic-bezier(.2,.9,.3,1);display:flex;gap:11px;align-items:center}
+.toast.show{transform:translate(-50%,0)}
+textarea.srcref{position:absolute;left:-99999px;top:0;opacity:0}
+
+@media(max-width:1000px){
+  .hero{grid-template-columns:1fr;padding-top:130px;gap:46px}
+  .visual{order:-1}
+  .grid3,.steps{grid-template-columns:1fr 1fr}
+  .preview{grid-template-columns:1fr;gap:40px}
+  .gui-mock{max-width:400px;margin:0 auto;width:100%}
+  .f-in{grid-template-columns:1fr 1fr}
+}
+@media(max-width:680px){
+  .nav-links{position:fixed;top:64px;left:0;right:0;flex-direction:column;align-items:stretch;gap:2px;
+    background:rgba(8,4,20,.98);border-bottom:1px solid var(--line);padding:14px;display:none}
+  .nav-links.open{display:flex}
+  .nav-links a{padding:13px 14px}
+  .burger{display:block}
+  .nav .btn{display:none}
+  .grid3,.steps,.stats{grid-template-columns:1fr 1fr}
+  .f-in{grid-template-columns:1fr}
+  section{padding:70px 18px}
+  .float-chip{display:none}
+  pre#codeBox{font-size:11px;padding:16px}
+}
+@media(max-width:420px){.grid3,.steps,.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="bgfx">
+  <div class="grid"></div>
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+</div>
+<div class="cursor-glow" id="cglow"></div>
+
+<!-- ===== NAV ===== -->
+<header class="nav" id="nav">
+  <div class="nav-in">
+    <a href="#top" class="logo">
+      <div class="logo-mark">09</div>
+      <div>マナビジョンタイピングHack<small>0909Group / v1.0</small></div>
+    </a>
+    <button class="burger" id="burger" aria-label="menu">☰</button>
+    <nav class="nav-links" id="navlinks">
+      <a href="#features">機能</a>
+      <a href="#preview">GUI</a>
+      <a href="#usage">使い方</a>
+      <a href="#code">コード</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="btn sm" data-copy>⧉ コピー</button>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="top">
+  <div>
+    <div class="badge reveal"><span class="dot"></span>VERSION 1.0 — 製作元 0909Group</div>
+    <h1 class="reveal" data-d="1">
+      <span class="cn">非人类输入速度的机械化机器人</span>
+      [マナビジョンタイピングHack] <b style="color:#c9a6ff">1.0</b>
+    </h1>
+    <p class="lead reveal" data-d="2">
+      ブラウザ上で動作するオールインワン・タイピング支援モジュール。<br>
+      自動入力ループ、God Mode、結果改ざん、ドラッグ可能なGUIを単一スクリプトに凝縮。<br>
+      貼り付けるだけで、あなたのブラウザに制御パネルが出現します。
+    </p>
+    <div class="typed-wrap reveal" data-d="3"><span id="typed"></span><span class="caret"></span></div>
+    <div class="hero-cta reveal" data-d="4">
+      <button class="btn" data-copy>⧉ スクリプトをコピー</button>
+      <a class="btn ghost" href="#code">↓ コードを見る</a>
+    </div>
+    <div class="stats reveal" data-d="5">
+      <div class="stat"><div class="n" data-count="0" data-suffix="ms">0</div><div class="l">最小入力間隔</div></div>
+      <div class="stat"><div class="n" data-count="99999" data-prefix="+">0</div><div class="l">高速オート加算</div></div>
+      <div class="stat"><div class="n" data-count="6" data-suffix="機能">0</div><div class="l">搭載モジュール</div></div>
+      <div class="stat"><div class="n" data-count="1" data-suffix=" file">0</div><div class="l">単一スクリプト</div></div>
+    </div>
+  </div>
+
+  <div class="visual reveal" data-d="2">
+    <div class="float-chip chip1">● God Mode : ACTIVE</div>
+    <div class="float-chip chip2">⚡ +99,999 chars</div>
+    <div class="kb-card">
+      <div class="kb-top">
+        <div><span style="color:#7d71a3;letter-spacing:.2em">SPEED</span><br><span class="wpm" id="wpm">0</span></div>
+        <div style="text-align:right"><span style="color:#7d71a3;letter-spacing:.2em">MISS</span><br><span class="wpm" id="miss" style="color:#7dffb0">0</span></div>
+      </div>
+      <div class="kb-row" id="row1"></div>
+      <div class="kb-row" id="row2"></div>
+      <div class="kb-row" id="row3"></div>
+      <div class="kb-bar"><i id="kbbar"></i></div>
+      <div style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8b7cb8;display:flex;justify-content:space-between">
+        <span id="kbtext">READY...</span><span>AUTO-ENGINE v1.0</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MARQUEE ===== -->
+<div class="marquee">
+  <div class="mq-track" id="mq">
+    <span>AUTO TYPING LOOP<i>◆</i>GOD MODE<i>◆</i>物理キーボード無効化<i>◆</i>タイピング効果音<i>◆</i>結果改ざん<i>◆</i>高速オート +99,999<i>◆</i>DRAGGABLE GUI<i>◆</i>MADE BY 0909Group<i>◆</i></span>
+    <span>AUTO TYPING LOOP<i>◆</i>GOD MODE<i>◆</i>物理キーボード無効化<i>◆</i>タイピング効果音<i>◆</i>結果改ざん<i>◆</i>高速オート +99,999<i>◆</i>DRAGGABLE GUI<i>◆</i>MADE BY 0909Group<i>◆</i></span>
+  </div>
+</div>
+
+<!-- ===== FEATURES ===== -->
+<section id="features">
+  <div class="sec-head reveal">
+    <div class="eyebrow">// Features</div>
+    <h2>搭載された <em>6つのモジュール</em></h2>
+    <p>すべて単一のスクリプトに同梱。GUIからリアルタイムでON/OFFを切り替え可能です。</p>
+  </div>
+  <div class="grid3">
+    <div class="card reveal" data-d="1">
+      <div class="ico">🤖</div>
+      <h3>自動入力ループ</h3>
+      <p>次の正解キーをDOMから解析し、keydown / keyup イベントを自動生成。0〜200msの範囲で入力間隔を自由に調整できます。</p>
+      <span class="tag">autoTypeConfig.delay</span>
+    </div>
+    <div class="card reveal" data-d="2">
+      <div class="ico">🛡️</div>
+      <h3>God Mode</h3>
+      <p>キー入力を常に正解コードへ書き換え、ミスカウントを強制リセット。エラー表示のCSSも同時に無効化します。</p>
+      <span class="tag">mistakeCount = 0</span>
+    </div>
+    <div class="card reveal" data-d="3">
+      <div class="ico">⛔</div>
+      <h3>物理キーボード無効化</h3>
+      <p>キャプチャフェーズでキーイベントを遮断。誤爆による記録汚染を完全に防止します。</p>
+      <span class="tag">stopImmediatePropagation</span>
+    </div>
+    <div class="card reveal" data-d="4">
+      <div class="ico">🔊</div>
+      <h3>タイピング効果音</h3>
+      <p>Web Audio APIによる矩形波シンセ。1200Hz→400Hzへ減衰する打鍵音をリアルタイム生成します。</p>
+      <span class="tag">OscillatorNode</span>
+    </div>
+    <div class="card reveal" data-d="5">
+      <div class="ico">📊</div>
+      <h3>結果改ざん機能</h3>
+      <p>得点・文字数・正解数・ミス数・正タイプ率をGUIから直接編集。結果画面への読み込み／反映をワンクリックで実行。</p>
+      <span class="tag">resultView_result</span>
+    </div>
+    <div class="card reveal" data-d="6">
+      <div class="ico">🖱️</div>
+      <h3>ドラッグ可能GUI</h3>
+      <p>グラデーション＋blurのパネルはヘッダーを掴んで自由に移動。最小化すれば☾ボタンとして待機します。</p>
+      <span class="tag">z-index: 99999</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PREVIEW ===== -->
+<section id="preview">
+  <div class="preview">
+    <div>
+      <div class="sec-head reveal" style="text-align:left;margin:0 0 8px">
+        <div class="eyebrow">// Interface</div>
+        <h2>操作は <em>すべてパネルから</em></h2>
+        <p>コンソールを触る必要はありません。実行後、右上に出現するコントロールパネルから全機能を制御します。</p>
+      </div>
+      <div class="pv-list">
+        <div class="pv-item reveal" data-d="1"><div class="num">01</div><div><b>ステータス表示</b><small>停止中 / 実行中 をリアルタイムでカラー表示。</small></div></div>
+        <div class="pv-item reveal" data-d="2"><div class="num">02</div><div><b>入力間隔スライダー</b><small>0ms（最速）〜200msまで無段階調整。</small></div></div>
+        <div class="pv-item reveal" data-d="3"><div class="num">03</div><div><b>3つのトグル</b><small>物理KB無効化 / 効果音 / God Mode。</small></div></div>
+        <div class="pv-item reveal" data-d="4"><div class="num">04</div><div><b>高速オートボタン</b><small>一気に +99,999 文字を加算しバッファを埋めます。</small></div></div>
+        <div class="pv-item reveal" data-d="5"><div class="num">05</div><div><b>ライブログ</b><small>すべての動作をタイムスタンプ付きで記録。</small></div></div>
+      </div>
+    </div>
+
+    <!-- GUIモック（実際に触れます） -->
+    <div class="reveal" data-d="2">
+      <div class="gui-mock">
+        <div class="gm-head">
+          <span>非人类输入速度的机械化机器人<br>[マナビジョンタイピングHack]1.0</span>
+          <div><button type="button">－</button><button type="button">×</button></div>
+        </div>
+        <div class="gm-body">
+          <div class="gm-status"><span>ステータス:</span><span id="gm-state">停止中</span></div>
+          <button class="gm-btn" id="gm-toggle">自動入力 START</button>
+          <div class="gm-slider">
+            <label><span>⏱️ 入力間隔 (ミリ秒)</span><b id="gm-dval">40ms</b></label>
+            <input type="range" id="gm-delay" min="0" max="200" value="40">
+          </div>
+          <div class="gm-checks">
+            <label><input type="checkbox" id="gm-kb"><span>⛔ 物理キーボードを無効化</span></label>
+            <label><input type="checkbox" id="gm-sfx"><span>🔊 タイピング効果音</span></label>
+            <label><input type="checkbox" id="gm-god"><span>🛡️ God Mode (誤タイプ無効化)</span></label>
+          </div>
+          <button class="gm-btn gm-hyper" id="gm-hyper">高速オート</button>
+          <div class="gm-log" id="gm-log"></div>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:11.5px;color:#7d71a3;margin-top:14px;font-family:'JetBrains Mono',monospace">↑ 動作イメージ（デモ用・クリック可能）</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== USAGE ===== -->
+<section id="usage">
+  <div class="sec-head reveal">
+    <div class="eyebrow">// Getting Started</div>
+    <h2>使い方は <em>3ステップ</em></h2>
+    <p>インストール不要。ブラウザの開発者コンソールに貼り付けるだけで起動します。</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal" data-d="1">
+      <div class="big">01</div>
+      <h3>スクリプトをコピー</h3>
+      <p>下部のコードボックスにある <b style="color:#fff">「コピー」</b> ボタンを押すと、スクリプト全体がクリップボードに保存されます。</p>
+    </div>
+    <div class="step reveal" data-d="2">
+      <div class="big">02</div>
+      <h3>コンソールに貼り付け</h3>
+      <p>対象ページで <code>F12</code> → <code>Console</code> タブを開き、貼り付けて <code>Enter</code>。右上にGUIが出現します。</p>
+    </div>
+    <div class="step reveal" data-d="3">
+      <div class="big">03</div>
+      <h3>START をクリック</h3>
+      <p>「自動入力 START」でエンジンが始動。必要に応じて God Mode や高速オートを活用してください。</p>
+    </div>
+  </div>
+  <div class="warn reveal" data-d="4">
+    <span style="font-size:20px">⚠️</span>
+    <div><b>免責事項：</b>本ツールは技術学習・検証目的で公開されているスクリプトです。利用にあたっては各サイトの利用規約および所属機関の規則を必ず確認し、<b>自己責任</b>で使用してください。本スクリプトの使用により生じたいかなる不利益・損害について、0909Group は一切の責任を負いません。</div>
+  </div>
+</section>
+
+<!-- ===== CODE ===== -->
+<section id="code">
+  <div class="sec-head reveal">
+    <div class="eyebrow">// Source Code</div>
+    <h2>スクリプト <em>本体</em></h2>
+    <p>以下が配布している完全なソースです。ワンクリックでコピーできます。</p>
+  </div>
+  <div class="code-wrap reveal" data-d="1">
+    <div class="code-bar">
+      <div class="tl"><i></i><i></i><i></i></div>
+      <span class="fname">manavision-typing-hack_v1.0.js</span>
+      <div class="copy-area">
+        <span class="lines" id="lineCount">— lines</span>
+        <button id="copyBtn">⧉ コピー</button>
+      </div>
+    </div>
+    <pre id="codeBox"></pre>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section id="faq">
+  <div class="sec-head reveal">
+    <div class="eyebrow">// FAQ</div>
+    <h2>よくある <em>質問</em></h2>
+  </div>
+  <div class="faq">
+    <div class="q reveal" data-d="1">
+      <button type="button"><span>Q. どこでどうやって実行するのですか？</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">対象ページを開いた状態で <code>F12</code>（Macは <code>Cmd+Option+J</code>）を押し、Consoleタブにスクリプトを貼り付けてEnterキーを押すだけです。実行すると右上にグラデーションのパネルが出現します。ブックマークレットに登録しておくとさらに手軽です。</div></div>
+    </div>
+    <div class="q reveal" data-d="2">
+      <button type="button"><span>Q. 「エンジンを捕捉中...」と出て動きません。</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">スクリプトはゲーム本体のエンジン初期化時にフックを仕込むため、<b>ゲーム開始前</b>に実行しておく必要があります。すでに始まっている場合は、ページをリロードしてからすぐに貼り付けてください。また、サイトの構造が更新されているとDOMセレクタ（<code>#keyboard .key.next</code> など）が一致せず動作しないことがあります。</div></div>
+    </div>
+    <div class="q reveal" data-d="3">
+      <button type="button"><span>Q. 物理キーボード無効化をONにしたら操作できなくなりました。</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">この機能はすべてのキー入力を遮断します。解除はGUIのチェックを外すか、パネルの <code>×</code> でGUIごと閉じてください。GUIを消してしまった場合はページを再読み込みすれば元に戻ります。</div></div>
+    </div>
+    <div class="q reveal" data-d="4">
+      <button type="button"><span>Q. 効果音が鳴りません。</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">ブラウザの autoplay ポリシーにより、AudioContext は<b>ユーザー操作の後</b>でないと起動できません。「🔊 タイピング効果音」にチェックを入れたあと、STARTボタンなどを一度クリックしてください。内部で <code>audioCtx.resume()</code> が呼ばれます。</div></div>
+    </div>
+    <div class="q reveal" data-d="5">
+      <button type="button"><span>Q. アンインストール方法はありますか？</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">パネル右上の <code>×</code> ボタンでGUIは削除されます。ただしプロトタイプに施したフックはメモリ上に残るため、完全に元の状態へ戻すには<b>ページの再読み込み</b>が確実です。永続的な改変は一切行いません。</div></div>
+    </div>
+    <div class="q reveal" data-d="6">
+      <button type="button"><span>Q. 安全ですか？ウイルスはありませんか？</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">本スクリプトは完結したJavaScriptのみで構成されており、外部サーバーへの通信・ファイル書き込み・個人情報収集は一切行いません。コードは上記の通り<b>全文公開</b>されていますので、実行前に自分で中身を確認できます。</div></div>
+    </div>
+    <div class="q reveal" data-d="6">
+      <button type="button"><span>Q. 対応ブラウザは？</span><span class="mark">+</span></button>
+      <div class="a"><div class="a-in">Chrome / Edge / Firefox / Safari の最新版で動作します（Web Audio API・CSS backdrop-filter を使用）。モバイルブラウザでは開発者コンソールが開けないため、PCでの利用を推奨します。</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA ===== -->
+<section>
+  <div class="cta reveal">
+    <h2>今すぐ <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">起動</span> する。</h2>
+    <p>コピーして、貼り付けるだけ。<br>非人类输入速度的机械化机器人 があなたのブラウザに宿ります。</p>
+    <button class="btn" data-copy style="font-size:16px;padding:16px 38px">⧉ スクリプトをコピーする</button>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="f-in">
+    <div>
+      <a href="#top" class="logo" style="margin-bottom:16px">
+        <div class="logo-mark">09</div>
+        <div>0909Group<small>SCRIPT DISTRIBUTION</small></div>
+      </a>
+      <p class="f-note">非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 は 0909Group が製作・配布するブラウザスクリプトです。本サイトの内容は学習・検証目的で提供されています。</p>
+    </div>
+    <div>
+      <h4>NAVIGATION</h4>
+      <a href="#features">機能一覧</a>
+      <a href="#preview">GUIプレビュー</a>
+      <a href="#usage">使い方</a>
+      <a href="#code">ソースコード</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div>
+      <h4>INFORMATION</h4>
+      <a href="#top">Version 1.0</a>
+      <a href="#usage">免責事項</a>
+      <a href="#faq">トラブルシューティング</a>
+      <a href="#code">ライセンス: 自己責任</a>
+    </div>
+  </div>
+  <div class="f-bot">© 2026 <b>0909Group</b> — 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 / All rights reserved.</div>
+</footer>
+
+<div class="toast" id="toast">✅ スクリプトをコピーしました！</div>
+
+<!-- 配布スクリプト本体（コピー用ソース） -->
+<textarea class="srcref" id="srcCode" spellcheck="false">(async () => {
+    console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Initializing... ===");
+
+    // --- 1. 設定とグローバル変数 ---
+    window.autoTypeConfig = {
+        enabled: false,
+        delay: 40,
+        godMode: false,
+        disablePhysical: false,
+        enableSfx: false,
+        isRunning: false
+    };
+
+    window.cheat_engine = null;
+    window.cheat_controller = null;
+
+    // --- 2. オーディオシステム (効果音) ---
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { console.error("Audio Context failed", e); }
+        }
+    }
+    function playTypingSound() {
+        if (!window.autoTypeConfig.enableSfx || !audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.03);
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+        
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.03);
+    }
+
+    // --- 3. God Mode CSS注入（エラー視覚効果の無効化） ---
+    if (!document.getElementById('god-mode-css')) {
+        const style = document.createElement('style');
+        style.id = 'god-mode-css';
+        style.innerHTML = `
+            .key.error, .key.down.error { 
+                background-color: transparent !important; 
+                color: inherit !important; 
+                box-shadow: none !important; 
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // --- 4. インスタンス捕捉フック + God Mode (修正版) ---
+    if (typeof Typing !== 'undefined') {
+        if (Typing.TypingEngine && !Typing.TypingEngine.prototype.__hooked) {
+            const origHandleKeydown = Typing.TypingEngine.prototype.handleKeydown;
+            Typing.TypingEngine.prototype.handleKeydown = function(event) {
+                // インスタンス捕捉
+                window.cheat_engine = this;
+                
+                // ★ God Mode: キー入力を常に正解キーに書き換える ★
+                if (window.autoTypeConfig.godMode && this.nextKey) {
+                    const correctCode = parseInt(this.nextKey.code);
+                    const correctShift = this.nextKey.shifted;
+                    
+                    try {
+                        Object.defineProperty(event, 'keyCode', { value: correctCode, writable: true, configurable: true });
+                        Object.defineProperty(event, 'which', { value: correctCode, writable: true, configurable: true });
+                        Object.defineProperty(event, 'shiftKey', { value: correctShift, writable: true, configurable: true });
+                    } catch(e) {}
+                }
+                
+                // 元の処理を実行
+                const result = origHandleKeydown.apply(this, arguments);
+                
+                // ★ God Mode: ミスカウントの強制リセット ★
+                if (window.autoTypeConfig.godMode && this.result) {
+                    this.result.mistakeCount = 0;
+                    this.result.noMissFlag = true;
+                    if (this.resultTotal) {
+                        this.resultTotal.mistakeCount = 0;
+                    }
+                }
+                return result;
+            };
+            Typing.TypingEngine.prototype.__hooked = true;
+        }
+        
+        if (Typing.TypingController && !Typing.TypingController.prototype.__hooked) {
+            const origInit = Typing.TypingController.prototype.init;
+            Typing.TypingController.prototype.init = function() {
+                window.cheat_controller = this;
+                return origInit.apply(this, arguments);
+            };
+            Typing.TypingController.prototype.__hooked = true;
+        }
+    }
+
+    // --- 5. 物理キーボード無効化リスナー ---
+    window.addEventListener('keydown', (e) => {
+        if (window.autoTypeConfig.disablePhysical && !e.isModEvent) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+        }
+    }, true);
+    window.addEventListener('keyup', (e) => {
+        if (window.autoTypeConfig.disablePhysical && !e.isModEvent) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+        }
+    }, true);
+
+    // --- 6. ログ出力関数 ---
+    function log(msg, type = 'info') {
+        const logEl = document.getElementById('gui-log');
+        if (!logEl) return;
+        const entry = document.createElement('div');
+        entry.style.cssText = `margin-bottom: 3px; color: ${type === 'error' ? '#ff8888' : '#ddd'}; font-size: 11px; line-height: 1.4;`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+        console.log(`[Hack] ${msg}`);
+    }
+
+    // --- 7. GUI 構築 ---
+    const gui = document.createElement('div');
+    gui.id = 'auto-type-gui';
+    gui.style.cssText = `
+        position: fixed; top: 20px; right: 20px; width: 320px;
+        background: linear-gradient(135deg, rgba(74,0,224,0.85), rgba(142,45,226,0.85));
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255,255,255,0.25); border-radius: 16px;
+        z-index: 99999; font-family: 'Segoe UI', 'Yu Gothic', sans-serif; color: #fff;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden;
+        user-select: none; display: flex; flex-direction: column;
+    `;
+
+    gui.innerHTML = `
+        <div id="gui-header" style="padding: 12px 16px; background: rgba(0,0,0,0.3); cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <span style="font-weight: bold; font-size: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0</span>
+            <div style="display: flex; gap: 10px;">
+                <button id="gui-minimize" style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 0 5px;" title="最小化">－</button>
+                <button id="gui-close" style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 0 5px;" title="閉じる">×</button>
+            </div>
+        </div>
+        
+        <div id="gui-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
+                <span style="font-size: 13px;">ステータス:</span>
+                <span id="gui-status" style="color: #ff4444; font-weight: bold; text-shadow: 0 0 5px #ff4444;">停止中</span>
+            </div>
+            
+            <button id="gui-toggle" style="
+                background: linear-gradient(90deg, #8E2DE2, #4A00E0); color: white; border: none; padding: 12px;
+                border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;
+                box-shadow: 0 4px 15px rgba(142,45,226,0.4); transition: 0.2s;
+            ">自動入力 START</button>
+
+            <div style="background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px;">
+                <label style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                    <span>⏱️ 入力間隔 (ミリ秒)</span>
+                    <span id="gui-delay-val" style="color: #fff; font-weight: bold;">40ms</span>
+                </label>
+                <input type="range" id="gui-delay" min="0" max="200" value="40" style="width: 100%; cursor: pointer; accent-color: #8E2DE2;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-disable-kb" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>⛔ 物理キーボードを無効化</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-sfx" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>🔊 タイピング効果音</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-godmode" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>🛡️ God Mode (誤タイプ無効化)</span>
+                </label>
+            </div>
+
+            <button id="gui-hyper" style="
+                background: linear-gradient(90deg, #6a11cb, #2575fc); color: white; border: none; padding: 12px;
+                border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px;
+                box-shadow: 0 4px 15px rgba(37,117,252,0.5); margin-top: 5px;
+            ">高速オート</button>
+            
+            <!-- 結果改ざん機能 -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px;">
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #ffd700;">📊 結果改ざん機能</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px;">
+                    <label>得点</label><input type="text" id="res-score" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>文字数</label><input type="text" id="res-chars" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>正解数</label><input type="text" id="res-correct" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>ミス数</label><input type="text" id="res-miss" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>正タイプ率</label><input type="text" id="res-rate" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button id="res-load" style="flex: 1; padding: 6px; font-size: 11px; background: rgba(255,255,255,0.1); border: none; border-radius: 4px; color: #fff; cursor: pointer;">読み込み</button>
+                    <button id="res-apply" style="flex: 1; padding: 6px; font-size: 11px; background: #8E2DE2; border: none; border-radius: 4px; color: #fff; cursor: pointer;">結果に反映</button>
+                </div>
+            </div>
+
+            <!-- ログエリア -->
+            <div id="gui-log" style="
+                height: 80px; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 8px;
+                padding: 8px; font-size: 11px; color: #ccc; margin-top: 10px;
+                border: 1px solid rgba(255,255,255,0.1);
+            "></div>
+        </div>
+    `;
+    document.body.appendChild(gui);
+
+    // オープンボタン（☾）ドラッグ可能
+    const restoreBtn = document.createElement('div');
+    restoreBtn.id = 'gui-restore';
+    restoreBtn.innerHTML = '☾';
+    restoreBtn.style.cssText = `
+        position: fixed; top: 20px; right: 20px; width: 40px; height: 40px;
+        background: linear-gradient(135deg, #6a11cb, #2575fc); border-radius: 50%;
+        display: none; align-items: center; justify-content: center; cursor: move;
+        z-index: 99999; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 20px;
+        border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    `;
+    document.body.appendChild(restoreBtn);
+
+    // オープンボタンのドラッグ処理
+    let isRestoreDragging = false;
+    let restoreStartX = 0, restoreStartY = 0;
+    let restoreOffsetX = 0, restoreOffsetY = 0;
+    let restoreMoved = false;
+
+    restoreBtn.addEventListener('mousedown', (e) => {
+        isRestoreDragging = true;
+        restoreMoved = false;
+        restoreStartX = e.clientX;
+        restoreStartY = e.clientY;
+        restoreOffsetX = e.clientX - restoreBtn.getBoundingClientRect().left;
+        restoreOffsetY = e.clientY - restoreBtn.getBoundingClientRect().top;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isRestoreDragging) return;
+        
+        const dx = e.clientX - restoreStartX;
+        const dy = e.clientY - restoreStartY;
+        
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            restoreMoved = true;
+        }
+        
+        if (restoreMoved) {
+            restoreBtn.style.left = (e.clientX - restoreOffsetX) + 'px';
+            restoreBtn.style.top = (e.clientY - restoreOffsetY) + 'px';
+            restoreBtn.style.right = 'auto';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isRestoreDragging && !restoreMoved) {
+            gui.style.display = 'flex';
+            restoreBtn.style.display = 'none';
+            log("GUIを復元しました。", "info");
+        }
+        isRestoreDragging = false;
+        restoreMoved = false;
+    });
+
+    // --- 8. GUI イベントバインド ---
+    const statusEl = document.getElementById('gui-status');
+    const toggleBtn = document.getElementById('gui-toggle');
+    const delaySlider = document.getElementById('gui-delay');
+    const delayVal = document.getElementById('gui-delay-val');
+    const godModeCheck = document.getElementById('gui-godmode');
+    const disableKbCheck = document.getElementById('gui-disable-kb');
+    const sfxCheck = document.getElementById('gui-sfx');
+    const hyperBtn = document.getElementById('gui-hyper');
+    const header = document.getElementById('gui-header');
+    const minimizeBtn = document.getElementById('gui-minimize');
+    const closeBtn = document.getElementById('gui-close');
+    const resLoadBtn = document.getElementById('res-load');
+    const resApplyBtn = document.getElementById('res-apply');
+
+    // メインGUIのドラッグ移動
+    let isDragging = false;
+    let offsetX, offsetY;
+    header.addEventListener('mousedown', (e) => {
+        if (e.target === minimizeBtn || e.target === closeBtn) return;
+        isDragging = true;
+        offsetX = e.clientX - gui.getBoundingClientRect().left;
+        offsetY = e.clientY - gui.getBoundingClientRect().top;
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        gui.style.left = (e.clientX - offsetX) + 'px';
+        gui.style.top = (e.clientY - offsetY) + 'px';
+        gui.style.right = 'auto';
+    });
+    document.addEventListener('mouseup', () => isDragging = false);
+
+    // 最小化・閉じる
+    minimizeBtn.addEventListener('click', () => {
+        gui.style.display = 'none';
+        restoreBtn.style.display = 'flex';
+        log("GUIを最小化しました。", "info");
+    });
+    closeBtn.addEventListener('click', () => {
+        gui.remove();
+        restoreBtn.remove();
+        console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Closed. ===");
+    });
+
+    // スライダー
+    delaySlider.addEventListener('input', (e) => {
+        window.autoTypeConfig.delay = parseInt(e.target.value);
+        delayVal.textContent = e.target.value + 'ms';
+    });
+
+    // トグル類
+    godModeCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.godMode = e.target.checked;
+        log(`God Mode: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+    disableKbCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.disablePhysical = e.target.checked;
+        log(`物理キーボード無効化: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+    sfxCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.enableSfx = e.target.checked;
+        if(e.target.checked) initAudio();
+        log(`効果音: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+
+    // ON/OFF
+    toggleBtn.addEventListener('click', () => {
+        initAudio();
+        window.autoTypeConfig.enabled = !window.autoTypeConfig.enabled;
+        if (window.autoTypeConfig.enabled) {
+            toggleBtn.textContent = '自動入力 STOP';
+            toggleBtn.style.background = 'linear-gradient(90deg, #4A00E0, #8E2DE2)';
+            statusEl.textContent = '実行中';
+            statusEl.style.color = '#4caf50';
+            log("自動入力を開始しました。", "success");
+            if (!window.autoTypeConfig.isRunning) startAutoTypeLoop();
+        } else {
+            toggleBtn.textContent = '自動入力 START';
+            toggleBtn.style.background = 'linear-gradient(90deg, #8E2DE2, #4A00E0)';
+            statusEl.textContent = '停止中';
+            statusEl.style.color = '#ff4444';
+            log("自動入力を停止しました。", "info");
+        }
+    });
+
+    // --- 9. 高速オート機能 ---
+    hyperBtn.addEventListener('click', () => {
+        if (!window.cheat_engine) {
+            log("エンジンを捕捉中... (ダミーイベント発火)", "info");
+            const dummyEvt = new KeyboardEvent('keydown', { keyCode: 112, bubbles: true, isModEvent: true });
+            window.dispatchEvent(dummyEvt);
+            
+            setTimeout(() => {
+                if (window.cheat_engine) {
+                    executeHyperSpeed(window.cheat_engine);
+                } else {
+                    log("エラー: ゲームが開始されていません。", "error");
+                }
+            }, 100);
+            return;
+        }
+        executeHyperSpeed(window.cheat_engine);
+    });
+
+    function executeHyperSpeed(engine) {
+        const addCount = 99999;
+
+        if (engine.result) {
+            engine.result.correctCount += addCount;
+            engine.result.inputCharCount += addCount;
+            engine.result.noMissFlag = true;
+        }
+        if (engine.resultTotal) {
+            engine.resultTotal.correctCount += addCount;
+            engine.resultTotal.inputCharCount += addCount;
+        }
+
+        const countEl = document.getElementById('inputtedWordsCount');
+        if (countEl) {
+            const current = parseInt(countEl.innerText) || 0;
+            countEl.innerText = current + addCount;
+        }
+
+        if (engine.guideString) {
+            engine.inputBuffer = engine.guideString; 
+        }
+
+        log("高速オート実行: +99,999文字", "success");
+        showNotification("高速オート実行完了");
+    }
+
+    // --- 10. 結果改ざん機能 ---
+    resLoadBtn.addEventListener('click', () => {
+        if (window.jQuery) {
+            const $scores = jQuery('#resultView_result .score');
+            if ($scores.length > 0) {
+                document.getElementById('res-score').value = $scores.eq(0).text();
+                document.getElementById('res-chars').value = $scores.eq(2).text();
+                document.getElementById('res-correct').value = $scores.eq(5).text();
+                document.getElementById('res-miss').value = $scores.eq(6).text();
+                document.getElementById('res-rate').value = $scores.eq(7).text();
+                log("結果画面から値を読み込みました。", "success");
+            } else {
+                log("結果画面が見つかりません。", "error");
+            }
+        }
+    });
+
+    resApplyBtn.addEventListener('click', () => {
+        if (window.jQuery) {
+            const $scores = jQuery('#resultView_result .score');
+            if ($scores.length > 0) {
+                const score = document.getElementById('res-score').value;
+                const chars = document.getElementById('res-chars').value;
+                const correct = document.getElementById('res-correct').value;
+                const miss = document.getElementById('res-miss').value;
+                const rate = document.getElementById('res-rate').value;
+
+                $scores.eq(0).text(score);
+                $scores.eq(2).text(chars);
+                $scores.eq(5).text(correct);
+                $scores.eq(6).text(miss);
+                $scores.eq(7).text(rate);
+                $scores.eq(8).text((100 - parseFloat(rate || 0)).toFixed(1));
+
+                if (window.cheat_controller) {
+                    window.cheat_controller.totalScore = parseInt(score);
+                    window.cheat_controller.correctCountRatio = parseFloat(rate);
+                }
+
+                log("結果画面に値を反映しました。", "success");
+            } else {
+                log("結果画面が見つかりません。結果画面が表示されているか確認してください。", "error");
+            }
+        }
+    });
+
+    function showNotification(text) {
+        const notif = document.createElement('div');
+        notif.innerText = text;
+        notif.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 20px 40px; border-radius: 10px;
+            font-size: 24px; font-weight: bold; z-index: 100000; pointer-events: none;
+            border: 2px solid #8E2DE2; box-shadow: 0 0 20px #8E2DE2;
+        `;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 1500);
+    }
+
+    // --- 11. メインループ ---
+    async function startAutoTypeLoop() {
+        window.autoTypeConfig.isRunning = true;
+        
+        const startBtn = document.querySelector('.typingButton');
+        if(startBtn && !startBtn.disabled) startBtn.click();
+        await new Promise(r => setTimeout(r, 1000));
+        
+        const pressSpace = () => {
+            const opts = {keyCode: 32, which: 32, bubbles: true, cancelable: true, view: window, isModEvent: true};
+            let downEvt = new KeyboardEvent('keydown', opts);
+            let upEvt = new KeyboardEvent('keyup', opts);
+            window.dispatchEvent(downEvt); window.dispatchEvent(upEvt);
+        };
+        
+        if (document.querySelector('#application')?.className.includes('ready') || 
+            document.querySelector('#application')?.className.includes('countdown')) {
+            pressSpace();
+        }
+
+        while(true) {
+            if (!window.autoTypeConfig.enabled) {
+                window.autoTypeConfig.isRunning = false;
+                break;
+            }
+
+            const appState = document.querySelector('#application')?.className || '';
+            if (appState.includes('result') || appState.includes('end')) {
+                log("ゲーム終了を検知しました。", "info");
+                break;
+            }
+
+            const nextKeys = document.querySelectorAll('#keyboard .key.next');
+            if (nextKeys.length > 0) {
+                let keyCode = 0;
+                let shiftKey = false;
+
+                for(let key of nextKeys) {
+                    if(key.classList.contains('key16')) shiftKey = true;
+                    else {
+                        let match = key.className.match(/key(\d+)/);
+                        if(match) keyCode = parseInt(match[1]);
+                    }
+                }
+
+                if (keyCode > 0) {
+                    const opts = {keyCode, which: keyCode, shiftKey, bubbles: true, cancelable: true, view: window, location: 0, isModEvent: true};
+                    let downEvt = new KeyboardEvent('keydown', opts);
+                    let upEvt = new KeyboardEvent('keyup', opts);
+                    
+                    if (downEvt.keyCode !== keyCode) {
+                        Object.defineProperty(downEvt, 'keyCode', { value: keyCode });
+                        Object.defineProperty(downEvt, 'which', { value: keyCode });
+                        Object.defineProperty(upEvt, 'keyCode', { value: keyCode });
+                        Object.defineProperty(upEvt, 'which', { value: keyCode });
+                    }
+
+                    window.dispatchEvent(downEvt); window.dispatchEvent(upEvt);
+                    document.dispatchEvent(downEvt); document.dispatchEvent(upEvt);
+                    
+                    playTypingSound();
+                }
+            }
+            await new Promise(r => setTimeout(r, window.autoTypeConfig.delay));
+        }
+    }
+
+    log("MODの準備が完了しました。", "success");
+    console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Ready. ===");
+})();</textarea>
+
+<script>
+(function(){
+  /* ---------- ソース取得 ---------- */
+  var SRC = document.getElementById('srcCode').value;
+  var codeBox = document.getElementById('codeBox');
+  document.getElementById('lineCount').textContent = SRC.split('\n').length + ' lines / ' + (SRC.length/1024).toFixed(1) + ' KB';
+
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function highlight(src){
+    var s = esc(src);
+    return s.replace(/(\/\/[^\n]*)|(`(?:[^`\\]|\\[\s\S])*?`)|('(?:[^'\\\n]|\\.)*')|("(?:[^"\\\n]|\\.)*")|(\b(?:const|let|var|function|return|if|else|while|for|of|in|new|typeof|instanceof|await|async|try|catch|throw|break|continue|class|this|null|true|false|undefined|window|document)\b)|(\b\d+(?:\.\d+)?\b)/g,
+      function(m,c,tpl,sq,dq,kw,num){
+        if(c) return '<span class="tok-com">'+c+'</span>';
+        if(tpl) return '<span class="tok-tpl">'+tpl+'</span>';
+        if(sq||dq) return '<span class="tok-str">'+m+'</span>';
+        if(kw) return '<span class="tok-kw">'+kw+'</span>';
+        if(num) return '<span class="tok-num">'+num+'</span>';
+        return m;
+      });
+  }
+  codeBox.innerHTML = highlight(SRC);
+
+  /* ---------- コピー ---------- */
+  var toast = document.getElementById('toast');
+  var toastT;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(function(){toast.classList.remove('show');},2200);
+  }
+  function doCopy(btn){
+    var ok = function(){
+      if(btn){btn.classList.add('done');btn.innerHTML='✅ コピー完了';setTimeout(function(){btn.classList.remove('done');btn.innerHTML='⧉ コピー';},2000);}
+      showToast('✅ スクリプトをコピーしました！');
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(SRC).then(ok).catch(fallback);
+    } else fallback();
+    function fallback(){
+      var ta=document.createElement('textarea');
+      ta.value=SRC;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');ok();}catch(e){showToast('❌ コピーに失敗しました');}
+      document.body.removeChild(ta);
+    }
+  }
+  document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){doCopy(null);});});
+  document.getElementById('copyBtn').addEventListener('click',function(){doCopy(this);});
+
+  /* ---------- ナビ ---------- */
+  var nav=document.getElementById('nav'), nl=document.getElementById('navlinks');
+  document.getElementById('burger').addEventListener('click',function(){nl.classList.toggle('open');});
+  nl.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nl.classList.remove('open');});});
+  window.addEventListener('scroll',function(){nav.classList.toggle('small',window.scrollY>60);},{passive:true});
+
+  /* ---------- スクロール表示 ---------- */
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+
+  /* ---------- カウントアップ ---------- */
+  var cio=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(!e.isIntersecting)return; cio.unobserve(e.target);
+    var el=e.target, target=parseInt(el.dataset.count,10), pre=el.dataset.prefix||'', suf=el.dataset.suffix||'', t0=null, dur=1400;
+    function step(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/dur,1); var v=Math.floor(target*(1-Math.pow(1-p,3)));
+      el.textContent=pre+v.toLocaleString('en-US')+suf; if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  });},{threshold:.5});
+  document.querySelectorAll('[data-count]').forEach(function(el){cio.observe(el);});
+
+  /* ---------- タイピング演出 ---------- */
+  var phrases=['> initializing auto-type engine...','> hook TypingEngine.prototype.handleKeydown ✔','> God Mode : mistakeCount = 0','> dispatch KeyboardEvent(keydown, keyup)','> +99,999 chars injected ✔','> 非人类输入速度 を達成。'];
+  var tp=document.getElementById('typed'), pi=0, ci=0, del=false;
+  (function type(){
+    var cur=phrases[pi];
+    tp.textContent = cur.substring(0,ci);
+    if(!del && ci<cur.length){ci++;setTimeout(type,32);}
+    else if(del && ci>0){ci--;setTimeout(type,14);}
+    else{ if(!del){del=true;setTimeout(type,1600);} else {del=false;pi=(pi+1)%phrases.length;setTimeout(type,260);} }
+  })();
+
+  /* ---------- キーボードビジュアル ---------- */
+  var rows=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['Z','X','C','V','B','N','M','SHIFT','SPACE']];
+  var keyEls=[];
+  rows.forEach(function(r,i){
+    var wrap=document.getElementById('row'+(i+1));
+    r.forEach(function(k){
+      var d=document.createElement('div'); d.className='key'; d.textContent=k;
+      if(k==='SPACE') d.style.flex='3.2'; if(k==='SHIFT') d.style.flex='1.6';
+      wrap.appendChild(d); keyEls.push({el:d,ch:k});
+    });
+  });
+  var demoText='MANAVISION TYPING HACK BY 0909GROUP ';
+  var wpmEl=document.getElementById('wpm'), bar=document.getElementById('kbbar'), kbtext=document.getElementById('kbtext');
+  var di=0, typed=0;
+  setInterval(function(){
+    var ch=demoText[di%demoText.length].toUpperCase();
+    kbtext.textContent=demoText.substring(0,(di%demoText.length)+1)+'▌';
+    keyEls.forEach(function(k){k.el.classList.remove('hit');});
+    var hit=keyEls.filter(function(k){return k.ch===ch;})[0] || keyEls[keyEls.length-1];
+    hit.el.classList.add('hit');
+    setTimeout(function(){hit.el.classList.remove('hit');},95);
+    di++; typed+=3;
+    wpmEl.textContent=Math.min(9999,180+typed).toLocaleString('en-US');
+    bar.style.width=Math.min(100,(di%demoText.length)/demoText.length*100)+'%';
+  },110);
+
+  /* ---------- カードのスポットライト ---------- */
+  document.querySelectorAll('.card').forEach(function(c){
+    c.addEventListener('mousemove',function(e){
+      var r=c.getBoundingClientRect();
+      c.style.setProperty('--mx',(e.clientX-r.left)+'px');
+      c.style.setProperty('--my',(e.clientY-r.top)+'px');
+    });
+  });
+
+  /* ---------- カーソルグロー ---------- */
+  var cg=document.getElementById('cglow');
+  window.addEventListener('mousemove',function(e){cg.style.opacity='1';cg.style.left=e.clientX+'px';cg.style.top=e.clientY+'px';},{passive:true});
+
+  /* ---------- FAQ ---------- */
+  document.querySelectorAll('.q').forEach(function(q){
+    var btn=q.querySelector('button'), ans=q.querySelector('.a');
+    btn.addEventListener('click',function(){
+      var isOpen=q.classList.contains('open');
+      document.querySelectorAll('.q.open').forEach(function(o){o.classList.remove('open');o.querySelector('.a').style.maxHeight='0px';});
+      if(!isOpen){q.classList.add('open');ans.style.maxHeight=ans.scrollHeight+'px';}
+    });
+  });
+
+  /* ---------- GUIモック（デモ） ---------- */
+  var gmLog=document.getElementById('gm-log'), gmToggle=document.getElementById('gm-toggle'),
+      gmState=document.getElementById('gm-state'), gmDelay=document.getElementById('gm-delay'),
+      gmDval=document.getElementById('gm-dval'), running=false, hyperTimer=null;
+  function glog(msg,type){
+    var d=document.createElement('div');
+    d.className = type==='ok'?'ok':(type==='er'?'er':'');
+    d.textContent='['+new Date().toLocaleTimeString('ja-JP')+'] '+msg;
+    gmLog.appendChild(d); gmLog.scrollTop=gmLog.scrollHeight;
+    while(gmLog.children.length>40) gmLog.removeChild(gmLog.firstChild);
+  }
+  glog('MODの準備が完了しました。','ok');
+  glog('GUIを生成しました (z-index:99999)');
+  gmToggle.addEventListener('click',function(){
+    running=!running;
+    gmToggle.textContent=running?'自動入力 STOP':'自動入力 START';
+    gmToggle.classList.toggle('on',running);
+    gmState.textContent=running?'実行中':'停止中';
+    gmState.classList.toggle('on',running);
+    glog(running?'自動入力を開始しました。':'自動入力を停止しました。',running?'ok':'');
+    if(running){
+      hyperTimer=setInterval(function(){
+        var pool=['KeyboardEvent 送出: keyCode=65','nextKey を解析中...','#keyboard .key.next → 3件','inputBuffer 更新','playTypingSound() 実行'];
+        glog(pool[Math.floor(Math.random()*pool.length)]);
+      },900);
+    } else clearInterval(hyperTimer);
+  });
+  gmDelay.addEventListener('input',function(){gmDval.textContent=gmDelay.value+'ms';});
+  document.getElementById('gm-kb').addEventListener('change',function(e){glog('物理キーボード無効化: '+(e.target.checked?'ON':'OFF'));});
+  document.getElementById('gm-sfx').addEventListener('change',function(e){glog('効果音: '+(e.target.checked?'ON':'OFF'));if(e.target.checked)glog('AudioContext を初期化しました。');});
+  document.getElementById('gm-god').addEventListener('change',function(e){glog('God Mode: '+(e.target.checked?'ON':'OFF'),e.target.checked?'ok':'');});
+  document.getElementById('gm-hyper').addEventListener('click',function(){
+    glog('エンジンを捕捉中... (ダミーイベント発火)');
+    setTimeout(function(){glog('高速オート実行: +99,999文字','ok');showToast('⚡ 高速オート実行完了（デモ）');},500);
+  });
+})();
+</script>
+</body>
+</html>
