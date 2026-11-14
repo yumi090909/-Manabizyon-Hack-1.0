@@ -1,0 +1,537 @@
+(async () => {
+    console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Initializing... ===");
+
+    // --- 1. 設定とグローバル変数 ---
+    window.autoTypeConfig = {
+        enabled: false,
+        delay: 40,
+        godMode: false,
+        disablePhysical: false,
+        enableSfx: false,
+        isRunning: false
+    };
+
+    window.cheat_engine = null;
+    window.cheat_controller = null;
+
+    // --- 2. オーディオシステム (効果音) ---
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { console.error("Audio Context failed", e); }
+        }
+    }
+    function playTypingSound() {
+        if (!window.autoTypeConfig.enableSfx || !audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.03);
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+        
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.03);
+    }
+
+    // --- 3. God Mode CSS注入（エラー視覚効果の無効化） ---
+    if (!document.getElementById('god-mode-css')) {
+        const style = document.createElement('style');
+        style.id = 'god-mode-css';
+        style.innerHTML = `
+            .key.error, .key.down.error { 
+                background-color: transparent !important; 
+                color: inherit !important; 
+                box-shadow: none !important; 
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // --- 4. インスタンス捕捉フック + God Mode (修正版) ---
+    if (typeof Typing !== 'undefined') {
+        if (Typing.TypingEngine && !Typing.TypingEngine.prototype.__hooked) {
+            const origHandleKeydown = Typing.TypingEngine.prototype.handleKeydown;
+            Typing.TypingEngine.prototype.handleKeydown = function(event) {
+                // インスタンス捕捉
+                window.cheat_engine = this;
+                
+                // ★ God Mode: キー入力を常に正解キーに書き換える ★
+                if (window.autoTypeConfig.godMode && this.nextKey) {
+                    const correctCode = parseInt(this.nextKey.code);
+                    const correctShift = this.nextKey.shifted;
+                    
+                    try {
+                        Object.defineProperty(event, 'keyCode', { value: correctCode, writable: true, configurable: true });
+                        Object.defineProperty(event, 'which', { value: correctCode, writable: true, configurable: true });
+                        Object.defineProperty(event, 'shiftKey', { value: correctShift, writable: true, configurable: true });
+                    } catch(e) {}
+                }
+                
+                // 元の処理を実行
+                const result = origHandleKeydown.apply(this, arguments);
+                
+                // ★ God Mode: ミスカウントの強制リセット ★
+                if (window.autoTypeConfig.godMode && this.result) {
+                    this.result.mistakeCount = 0;
+                    this.result.noMissFlag = true;
+                    if (this.resultTotal) {
+                        this.resultTotal.mistakeCount = 0;
+                    }
+                }
+                return result;
+            };
+            Typing.TypingEngine.prototype.__hooked = true;
+        }
+        
+        if (Typing.TypingController && !Typing.TypingController.prototype.__hooked) {
+            const origInit = Typing.TypingController.prototype.init;
+            Typing.TypingController.prototype.init = function() {
+                window.cheat_controller = this;
+                return origInit.apply(this, arguments);
+            };
+            Typing.TypingController.prototype.__hooked = true;
+        }
+    }
+
+    // --- 5. 物理キーボード無効化リスナー ---
+    window.addEventListener('keydown', (e) => {
+        if (window.autoTypeConfig.disablePhysical && !e.isModEvent) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+        }
+    }, true);
+    window.addEventListener('keyup', (e) => {
+        if (window.autoTypeConfig.disablePhysical && !e.isModEvent) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+        }
+    }, true);
+
+    // --- 6. ログ出力関数 ---
+    function log(msg, type = 'info') {
+        const logEl = document.getElementById('gui-log');
+        if (!logEl) return;
+        const entry = document.createElement('div');
+        entry.style.cssText = `margin-bottom: 3px; color: ${type === 'error' ? '#ff8888' : '#ddd'}; font-size: 11px; line-height: 1.4;`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+        console.log(`[Hack] ${msg}`);
+    }
+
+    // --- 7. GUI 構築 ---
+    const gui = document.createElement('div');
+    gui.id = 'auto-type-gui';
+    gui.style.cssText = `
+        position: fixed; top: 20px; right: 20px; width: 320px;
+        background: linear-gradient(135deg, rgba(74,0,224,0.85), rgba(142,45,226,0.85));
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255,255,255,0.25); border-radius: 16px;
+        z-index: 99999; font-family: 'Segoe UI', 'Yu Gothic', sans-serif; color: #fff;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden;
+        user-select: none; display: flex; flex-direction: column;
+    `;
+
+    gui.innerHTML = `
+        <div id="gui-header" style="padding: 12px 16px; background: rgba(0,0,0,0.3); cursor: move; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <span style="font-weight: bold; font-size: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0</span>
+            <div style="display: flex; gap: 10px;">
+                <button id="gui-minimize" style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 0 5px;" title="最小化">－</button>
+                <button id="gui-close" style="background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 0 5px;" title="閉じる">×</button>
+            </div>
+        </div>
+        
+        <div id="gui-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px;">
+                <span style="font-size: 13px;">ステータス:</span>
+                <span id="gui-status" style="color: #ff4444; font-weight: bold; text-shadow: 0 0 5px #ff4444;">停止中</span>
+            </div>
+            
+            <button id="gui-toggle" style="
+                background: linear-gradient(90deg, #8E2DE2, #4A00E0); color: white; border: none; padding: 12px;
+                border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px;
+                box-shadow: 0 4px 15px rgba(142,45,226,0.4); transition: 0.2s;
+            ">自動入力 START</button>
+
+            <div style="background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px;">
+                <label style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                    <span>⏱️ 入力間隔 (ミリ秒)</span>
+                    <span id="gui-delay-val" style="color: #fff; font-weight: bold;">40ms</span>
+                </label>
+                <input type="range" id="gui-delay" min="0" max="200" value="40" style="width: 100%; cursor: pointer; accent-color: #8E2DE2;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-disable-kb" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>⛔ 物理キーボードを無効化</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-sfx" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>🔊 タイピング効果音</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px;">
+                    <input type="checkbox" id="gui-godmode" style="width: 18px; height: 18px; cursor: pointer; accent-color: #8E2DE2;">
+                    <span>🛡️ God Mode (誤タイプ無効化)</span>
+                </label>
+            </div>
+
+            <button id="gui-hyper" style="
+                background: linear-gradient(90deg, #6a11cb, #2575fc); color: white; border: none; padding: 12px;
+                border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px;
+                box-shadow: 0 4px 15px rgba(37,117,252,0.5); margin-top: 5px;
+            ">高速オート</button>
+            
+            <!-- 結果改ざん機能 -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; margin-top: 10px;">
+                <div style="font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #ffd700;">📊 結果改ざん機能</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 11px;">
+                    <label>得点</label><input type="text" id="res-score" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>文字数</label><input type="text" id="res-chars" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>正解数</label><input type="text" id="res-correct" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>ミス数</label><input type="text" id="res-miss" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                    <label>正タイプ率</label><input type="text" id="res-rate" style="width: 100%; padding: 2px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button id="res-load" style="flex: 1; padding: 6px; font-size: 11px; background: rgba(255,255,255,0.1); border: none; border-radius: 4px; color: #fff; cursor: pointer;">読み込み</button>
+                    <button id="res-apply" style="flex: 1; padding: 6px; font-size: 11px; background: #8E2DE2; border: none; border-radius: 4px; color: #fff; cursor: pointer;">結果に反映</button>
+                </div>
+            </div>
+
+            <!-- ログエリア -->
+            <div id="gui-log" style="
+                height: 80px; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 8px;
+                padding: 8px; font-size: 11px; color: #ccc; margin-top: 10px;
+                border: 1px solid rgba(255,255,255,0.1);
+            "></div>
+        </div>
+    `;
+    document.body.appendChild(gui);
+
+    // オープンボタン（☾）ドラッグ可能
+    const restoreBtn = document.createElement('div');
+    restoreBtn.id = 'gui-restore';
+    restoreBtn.innerHTML = '☾';
+    restoreBtn.style.cssText = `
+        position: fixed; top: 20px; right: 20px; width: 40px; height: 40px;
+        background: linear-gradient(135deg, #6a11cb, #2575fc); border-radius: 50%;
+        display: none; align-items: center; justify-content: center; cursor: move;
+        z-index: 99999; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 20px;
+        border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    `;
+    document.body.appendChild(restoreBtn);
+
+    // オープンボタンのドラッグ処理
+    let isRestoreDragging = false;
+    let restoreStartX = 0, restoreStartY = 0;
+    let restoreOffsetX = 0, restoreOffsetY = 0;
+    let restoreMoved = false;
+
+    restoreBtn.addEventListener('mousedown', (e) => {
+        isRestoreDragging = true;
+        restoreMoved = false;
+        restoreStartX = e.clientX;
+        restoreStartY = e.clientY;
+        restoreOffsetX = e.clientX - restoreBtn.getBoundingClientRect().left;
+        restoreOffsetY = e.clientY - restoreBtn.getBoundingClientRect().top;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isRestoreDragging) return;
+        
+        const dx = e.clientX - restoreStartX;
+        const dy = e.clientY - restoreStartY;
+        
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            restoreMoved = true;
+        }
+        
+        if (restoreMoved) {
+            restoreBtn.style.left = (e.clientX - restoreOffsetX) + 'px';
+            restoreBtn.style.top = (e.clientY - restoreOffsetY) + 'px';
+            restoreBtn.style.right = 'auto';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isRestoreDragging && !restoreMoved) {
+            gui.style.display = 'flex';
+            restoreBtn.style.display = 'none';
+            log("GUIを復元しました。", "info");
+        }
+        isRestoreDragging = false;
+        restoreMoved = false;
+    });
+
+    // --- 8. GUI イベントバインド ---
+    const statusEl = document.getElementById('gui-status');
+    const toggleBtn = document.getElementById('gui-toggle');
+    const delaySlider = document.getElementById('gui-delay');
+    const delayVal = document.getElementById('gui-delay-val');
+    const godModeCheck = document.getElementById('gui-godmode');
+    const disableKbCheck = document.getElementById('gui-disable-kb');
+    const sfxCheck = document.getElementById('gui-sfx');
+    const hyperBtn = document.getElementById('gui-hyper');
+    const header = document.getElementById('gui-header');
+    const minimizeBtn = document.getElementById('gui-minimize');
+    const closeBtn = document.getElementById('gui-close');
+    const resLoadBtn = document.getElementById('res-load');
+    const resApplyBtn = document.getElementById('res-apply');
+
+    // メインGUIのドラッグ移動
+    let isDragging = false;
+    let offsetX, offsetY;
+    header.addEventListener('mousedown', (e) => {
+        if (e.target === minimizeBtn || e.target === closeBtn) return;
+        isDragging = true;
+        offsetX = e.clientX - gui.getBoundingClientRect().left;
+        offsetY = e.clientY - gui.getBoundingClientRect().top;
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        gui.style.left = (e.clientX - offsetX) + 'px';
+        gui.style.top = (e.clientY - offsetY) + 'px';
+        gui.style.right = 'auto';
+    });
+    document.addEventListener('mouseup', () => isDragging = false);
+
+    // 最小化・閉じる
+    minimizeBtn.addEventListener('click', () => {
+        gui.style.display = 'none';
+        restoreBtn.style.display = 'flex';
+        log("GUIを最小化しました。", "info");
+    });
+    closeBtn.addEventListener('click', () => {
+        gui.remove();
+        restoreBtn.remove();
+        console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Closed. ===");
+    });
+
+    // スライダー
+    delaySlider.addEventListener('input', (e) => {
+        window.autoTypeConfig.delay = parseInt(e.target.value);
+        delayVal.textContent = e.target.value + 'ms';
+    });
+
+    // トグル類
+    godModeCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.godMode = e.target.checked;
+        log(`God Mode: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+    disableKbCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.disablePhysical = e.target.checked;
+        log(`物理キーボード無効化: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+    sfxCheck.addEventListener('change', (e) => {
+        window.autoTypeConfig.enableSfx = e.target.checked;
+        if(e.target.checked) initAudio();
+        log(`効果音: ${e.target.checked ? 'ON' : 'OFF'}`);
+    });
+
+    // ON/OFF
+    toggleBtn.addEventListener('click', () => {
+        initAudio();
+        window.autoTypeConfig.enabled = !window.autoTypeConfig.enabled;
+        if (window.autoTypeConfig.enabled) {
+            toggleBtn.textContent = '自動入力 STOP';
+            toggleBtn.style.background = 'linear-gradient(90deg, #4A00E0, #8E2DE2)';
+            statusEl.textContent = '実行中';
+            statusEl.style.color = '#4caf50';
+            log("自動入力を開始しました。", "success");
+            if (!window.autoTypeConfig.isRunning) startAutoTypeLoop();
+        } else {
+            toggleBtn.textContent = '自動入力 START';
+            toggleBtn.style.background = 'linear-gradient(90deg, #8E2DE2, #4A00E0)';
+            statusEl.textContent = '停止中';
+            statusEl.style.color = '#ff4444';
+            log("自動入力を停止しました。", "info");
+        }
+    });
+
+    // --- 9. 高速オート機能 ---
+    hyperBtn.addEventListener('click', () => {
+        if (!window.cheat_engine) {
+            log("エンジンを捕捉中... (ダミーイベント発火)", "info");
+            const dummyEvt = new KeyboardEvent('keydown', { keyCode: 112, bubbles: true, isModEvent: true });
+            window.dispatchEvent(dummyEvt);
+            
+            setTimeout(() => {
+                if (window.cheat_engine) {
+                    executeHyperSpeed(window.cheat_engine);
+                } else {
+                    log("エラー: ゲームが開始されていません。", "error");
+                }
+            }, 100);
+            return;
+        }
+        executeHyperSpeed(window.cheat_engine);
+    });
+
+    function executeHyperSpeed(engine) {
+        const addCount = 99999;
+
+        if (engine.result) {
+            engine.result.correctCount += addCount;
+            engine.result.inputCharCount += addCount;
+            engine.result.noMissFlag = true;
+        }
+        if (engine.resultTotal) {
+            engine.resultTotal.correctCount += addCount;
+            engine.resultTotal.inputCharCount += addCount;
+        }
+
+        const countEl = document.getElementById('inputtedWordsCount');
+        if (countEl) {
+            const current = parseInt(countEl.innerText) || 0;
+            countEl.innerText = current + addCount;
+        }
+
+        if (engine.guideString) {
+            engine.inputBuffer = engine.guideString; 
+        }
+
+        log("高速オート実行: +99,999文字", "success");
+        showNotification("高速オート実行完了");
+    }
+
+    // --- 10. 結果改ざん機能 ---
+    resLoadBtn.addEventListener('click', () => {
+        if (window.jQuery) {
+            const $scores = jQuery('#resultView_result .score');
+            if ($scores.length > 0) {
+                document.getElementById('res-score').value = $scores.eq(0).text();
+                document.getElementById('res-chars').value = $scores.eq(2).text();
+                document.getElementById('res-correct').value = $scores.eq(5).text();
+                document.getElementById('res-miss').value = $scores.eq(6).text();
+                document.getElementById('res-rate').value = $scores.eq(7).text();
+                log("結果画面から値を読み込みました。", "success");
+            } else {
+                log("結果画面が見つかりません。", "error");
+            }
+        }
+    });
+
+    resApplyBtn.addEventListener('click', () => {
+        if (window.jQuery) {
+            const $scores = jQuery('#resultView_result .score');
+            if ($scores.length > 0) {
+                const score = document.getElementById('res-score').value;
+                const chars = document.getElementById('res-chars').value;
+                const correct = document.getElementById('res-correct').value;
+                const miss = document.getElementById('res-miss').value;
+                const rate = document.getElementById('res-rate').value;
+
+                $scores.eq(0).text(score);
+                $scores.eq(2).text(chars);
+                $scores.eq(5).text(correct);
+                $scores.eq(6).text(miss);
+                $scores.eq(7).text(rate);
+                $scores.eq(8).text((100 - parseFloat(rate || 0)).toFixed(1));
+
+                if (window.cheat_controller) {
+                    window.cheat_controller.totalScore = parseInt(score);
+                    window.cheat_controller.correctCountRatio = parseFloat(rate);
+                }
+
+                log("結果画面に値を反映しました。", "success");
+            } else {
+                log("結果画面が見つかりません。結果画面が表示されているか確認してください。", "error");
+            }
+        }
+    });
+
+    function showNotification(text) {
+        const notif = document.createElement('div');
+        notif.innerText = text;
+        notif.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 20px 40px; border-radius: 10px;
+            font-size: 24px; font-weight: bold; z-index: 100000; pointer-events: none;
+            border: 2px solid #8E2DE2; box-shadow: 0 0 20px #8E2DE2;
+        `;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 1500);
+    }
+
+    // --- 11. メインループ ---
+    async function startAutoTypeLoop() {
+        window.autoTypeConfig.isRunning = true;
+        
+        const startBtn = document.querySelector('.typingButton');
+        if(startBtn && !startBtn.disabled) startBtn.click();
+        await new Promise(r => setTimeout(r, 1000));
+        
+        const pressSpace = () => {
+            const opts = {keyCode: 32, which: 32, bubbles: true, cancelable: true, view: window, isModEvent: true};
+            let downEvt = new KeyboardEvent('keydown', opts);
+            let upEvt = new KeyboardEvent('keyup', opts);
+            window.dispatchEvent(downEvt); window.dispatchEvent(upEvt);
+        };
+        
+        if (document.querySelector('#application')?.className.includes('ready') || 
+            document.querySelector('#application')?.className.includes('countdown')) {
+            pressSpace();
+        }
+
+        while(true) {
+            if (!window.autoTypeConfig.enabled) {
+                window.autoTypeConfig.isRunning = false;
+                break;
+            }
+
+            const appState = document.querySelector('#application')?.className || '';
+            if (appState.includes('result') || appState.includes('end')) {
+                log("ゲーム終了を検知しました。", "info");
+                break;
+            }
+
+            const nextKeys = document.querySelectorAll('#keyboard .key.next');
+            if (nextKeys.length > 0) {
+                let keyCode = 0;
+                let shiftKey = false;
+
+                for(let key of nextKeys) {
+                    if(key.classList.contains('key16')) shiftKey = true;
+                    else {
+                        let match = key.className.match(/key(\d+)/);
+                        if(match) keyCode = parseInt(match[1]);
+                    }
+                }
+
+                if (keyCode > 0) {
+                    const opts = {keyCode, which: keyCode, shiftKey, bubbles: true, cancelable: true, view: window, location: 0, isModEvent: true};
+                    let downEvt = new KeyboardEvent('keydown', opts);
+                    let upEvt = new KeyboardEvent('keyup', opts);
+                    
+                    if (downEvt.keyCode !== keyCode) {
+                        Object.defineProperty(downEvt, 'keyCode', { value: keyCode });
+                        Object.defineProperty(downEvt, 'which', { value: keyCode });
+                        Object.defineProperty(upEvt, 'keyCode', { value: keyCode });
+                        Object.defineProperty(upEvt, 'which', { value: keyCode });
+                    }
+
+                    window.dispatchEvent(downEvt); window.dispatchEvent(upEvt);
+                    document.dispatchEvent(downEvt); document.dispatchEvent(upEvt);
+                    
+                    playTypingSound();
+                }
+            }
+            await new Promise(r => setTimeout(r, window.autoTypeConfig.delay));
+        }
+    }
+
+    log("MODの準備が完了しました。", "success");
+    console.log("=== 非人类输入速度的机械化机器人[マナビジョンタイピングHack]1.0 Ready. ===");
+})();
